@@ -152,9 +152,9 @@ func TestRotateTile(t *testing.T) {
 	}
 }
 
-func TestNeighboursFromEmpty(t *testing.T) {
+func TestVariationsFromEmpty(t *testing.T) {
 	s := solution([]tile{})
-	neighbours := s.neighbours(tesalatingTile)
+	neighbours := s.variations(tesalatingTile)
 	if len(neighbours) != 4 {
 		t.Errorf("unexpected number of neighbours %d, wanted %d", len(neighbours), 4)
 		return
@@ -173,9 +173,9 @@ func TestNeighboursFromEmpty(t *testing.T) {
 	}
 }
 
-func TestNeighboursOnlyValid(t *testing.T) {
+func TestVariationsOnlyValid(t *testing.T) {
 	s := solution([]tile{tesalatingTile})
-	neighbours := s.neighbours(tesalatingTile)
+	neighbours := s.variations(tesalatingTile)
 	if len(neighbours) != 1 {
 		t.Errorf("unexpected number of neighbours %d, wanted %d", len(neighbours), 1)
 		return

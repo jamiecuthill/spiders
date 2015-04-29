@@ -18,6 +18,10 @@ type side struct {
 	part
 }
 
+func (s *side) toString() string {
+	return fmt.Sprintf("%v%s", s.spider, s.part)
+}
+
 type tile struct {
 	top    side
 	right  side
@@ -76,8 +80,17 @@ func (s solution) place(t tile) solution {
 	return append(s, t)
 }
 
-// Place the tile in all possible ways
-func (s solution) neighbours(t tile) []solution {
+// All possible permutations for this solution with the remaining tiles
+func (s solution) permutations(tiles []tile) []solution {
+	var n []solution
+	for _, t := range tiles {
+		n = append(n, s.variations(t)...)
+	}
+	return n
+}
+
+// places the tile in the next space
+func (s solution) variations(t tile) []solution {
 	var n []solution
 	for i := 0; i < 4; i++ {
 		s1 := s.place(t.rotate(i))
@@ -86,6 +99,39 @@ func (s solution) neighbours(t tile) []solution {
 		}
 	}
 	return n
+}
+
+func (s solution) print() {
+	s.printRow(0, 3)
+	s.printRow(3, 6)
+	s.printRow(6, 9)
+}
+
+func (s solution) printRow(from, to int) {
+	for i := from; i < to; i++ {
+		if i < len(s) {
+			fmt.Print("  ", s[i].top.toString(), "  ")
+		} else {
+			fmt.Print("  --  ")
+		}
+	}
+	fmt.Println("")
+	for i := from; i < to; i++ {
+		if i < len(s) {
+			fmt.Print(s[i].left.toString(), "  ", s[i].right.toString())
+		} else {
+			fmt.Print("--  --")
+		}
+	}
+	fmt.Println("")
+	for i := from; i < to; i++ {
+		if i < len(s) {
+			fmt.Print("  ", s[i].bottom.toString(), "  ")
+		} else {
+			fmt.Print("  --  ")
+		}
+	}
+	fmt.Println("")
 }
 
 // match true if the edge matches
@@ -100,9 +146,15 @@ func match(a, b side) bool {
 func solve(tiles []tile, solutions []solution) solution {
 	if len(solutions) == 0 {
 		// start from scratch
+		for _, tile := range tiles {
+			solutions = append(solutions, solution{tile})
+		}
+	}
+	for _, s := range solutions {
+		solve(tiles[1:], s.variations(tiles[0]))
 	}
 	// solve(tiles[1:], s.place(tiles[0]))
-	return nil
+	return solutions[0]
 }
 
 func newTile(top, right, bottom, left side) tile {
@@ -185,8 +237,14 @@ func main() {
 		side{tarantula, tail},
 		side{wolf, tail})
 
-	fmt.Println(tiles)
+	// picSol := solution{tiles[0], tiles[1], tiles[2],
+	// 	tiles[3], tiles[4], tiles[5],
+	// 	tiles[6], tiles[7], tiles[8]}
+	// picSol.print()
+	// fmt.Printf("Solved: %v\n", picSol.isComplete())
 
 	fmt.Println("Solving spiders")
+	sol := solve(tiles, make([]solution, 0))
+	sol.print()
 
 }
