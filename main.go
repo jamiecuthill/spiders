@@ -118,28 +118,6 @@ func match(a, b side) bool {
 
 // search for solutions to the problem
 func search(solutions []solution) []solution {
-
-	// var bucket []solution
-
-	// for _, s := range solutions {
-	// 	for !s.exhausted() {
-	// 		perms := s.permutations()
-	// 		if len(perms) == 0 {
-	// 			fmt.Println("No solutions")
-	// 			break
-	// 		}
-	// 		// for _, v := range perms {
-	// 		// 	v.print()
-	// 		// 	fmt.Println(v.isValid())
-	// 		// 	fmt.Println("\n\n")
-	// 		// }
-	// 		s = perms[0]
-	// 	}
-	//
-	// }
-	//
-	// return []solution{}
-
 	var incomplete []solution
 	var exhausted []solution
 	for i := range solutions {
