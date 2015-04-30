@@ -79,19 +79,20 @@ func (g grid) edges() (edges []edge) {
 
 // All possible permutations for thig grid with the remaining tiles
 func (s solution) permutations() []solution {
-	tiles := make([]tile, len(s.remainingTiles))
-	copy(tiles, s.remainingTiles)
 	var n []solution
 	for i, t := range s.remainingTiles {
+		tiles := make([]tile, len(s.remainingTiles))
+		copy(tiles, s.remainingTiles)
 		t1 := append(tiles[:i], tiles[i+1:]...)
 		vars := s.variations(t)
 		for j := 0; j < len(vars); j++ {
 			n = append(n, solution{append([]tile(nil), vars[j]...), append([]tile(nil), t1...)})
 		}
 	}
-	// fmt.Println(len(n), "permutations for")
-	// s.print()
-	// fmt.Println("============================")
+	fmt.Println(len(n), "permutations for")
+	s.print()
+	fmt.Println("============================")
+	fmt.Println("remainders", s.remainingTiles)
 	return n
 }
 
@@ -123,7 +124,10 @@ func search(solutions []solution) []solution {
 	for i := range solutions {
 		for _, s := range solutions[i].permutations() {
 			if s.exhausted() {
-				exhausted = append(exhausted, s)
+				if s.isComplete() {
+					exhausted = append(exhausted, s)
+
+				}
 			} else {
 				incomplete = append(incomplete, s)
 			}
@@ -160,7 +164,7 @@ func main() {
 	// Wolf - The one with the checkered abdomen
 	wolf := spider(4)
 
-	tiles := make([]tile, 9)
+	var tiles [9]tile
 
 	tiles[0] = newTile(
 		side{wolf, head},
@@ -217,7 +221,7 @@ func main() {
 		side{wolf, tail})
 
 	fmt.Println("Solving spiders")
-	sol := search([]solution{solution{grid{}, tiles}})
+	sol := search([]solution{solution{grid{}, tiles[:]}})
 	if len(sol) == 0 {
 		fmt.Println("No solutions found")
 		return
