@@ -49,29 +49,38 @@ func TestNotMatchOnSpider(t *testing.T) {
 	}
 }
 
-func TestEdgesIsEmptyFor1x1(t *testing.T) {
-	s := solution([]tile{tesalatingTile})
+func TestEdgesIsEmptyForEmptySolution(t *testing.T) {
+	s := grid([]tile{})
 	l := len(s.edges())
 	if l != 0 {
 		t.Errorf("unexpected number of edges %d, want %d", l, 0)
 	}
 }
 
-func TestEdgesIsCorrectLengthFor2x2(t *testing.T) {
-	s := solution([]tile{tesalatingTile, tesalatingTile, tesalatingTile, tesalatingTile})
+func TestEdgesIsEmptyForSingleTile(t *testing.T) {
+	s := grid([]tile{tesalatingTile})
 	l := len(s.edges())
-	if l != 4 {
-		t.Errorf("unexpected number of edges %d, want %d", l, 4)
+	if l != 0 {
+		t.Errorf("unexpected number of edges %d, want %d", l, 0)
 	}
 }
 
-func TestEdgesHoldsCorrectData2x2(t *testing.T) {
-	s := solution([]tile{tesalatingTile, tesalatingTile, tesalatingTile, tesalatingTile})
+func TestEdgesIsCorrectLengthForIncompleteSolution(t *testing.T) {
+	s := grid([]tile{tesalatingTile, tesalatingTile, tesalatingTile,
+		tesalatingTile})
+	l := len(s.edges())
+	if l != 3 {
+		t.Errorf("unexpected number of edges %d, want %d", l, 3)
+	}
+}
+
+func TestEdgesHoldsCorrectDataForIncompleteSolution(t *testing.T) {
+	s := grid([]tile{tesalatingTile, tesalatingTile, tesalatingTile,
+		tesalatingTile})
 
 	// Need to make this test not care about order of edges
 	expectedEdges := []edge{
 		edge{tesalatingTile.right, tesalatingTile.left},
-		edge{tesalatingTile.bottom, tesalatingTile.top},
 		edge{tesalatingTile.right, tesalatingTile.left},
 		edge{tesalatingTile.bottom, tesalatingTile.top}}
 
@@ -84,6 +93,16 @@ func TestEdgesHoldsCorrectData2x2(t *testing.T) {
 	}
 }
 
+func TestEdgesForFullGrid(t *testing.T) {
+	g := grid([]tile{tesalatingTile, tesalatingTile, tesalatingTile,
+		tesalatingTile, tesalatingTile, tesalatingTile,
+		tesalatingTile, tesalatingTile, tesalatingTile})
+
+	if len(g.edges()) != 12 {
+		t.Errorf("unexpected number of edges %d, want %d", len(g.edges()), 12)
+	}
+}
+
 func assertEdge(e edge, a, b side) error {
 	if e.a != a && e.b != b {
 		return fmt.Errorf("unxpected edge %v, want {%v, %v}", e, a, b)
@@ -93,44 +112,44 @@ func assertEdge(e edge, a, b side) error {
 
 // solution 1x1 is valid
 func TestSolution1by1IsValid(t *testing.T) {
-	s := solution([]tile{tesalatingTile})
+	s := grid([]tile{tesalatingTile})
 	if !s.isValid() {
 		t.Error("solution must be valid")
 	}
 }
 
-// solution 2x2 is valid
-func TestSolution2by2IsValid(t *testing.T) {
-	s := solution([]tile{tesalatingTile, tesalatingTile, tesalatingTile, tesalatingTile})
+// solution is valid
+func TestSolutionIsValid(t *testing.T) {
+	s := grid([]tile{tesalatingTile, tesalatingTile, tesalatingTile, tesalatingTile})
 	if !s.isValid() {
 		t.Error("solution must be valid")
 	}
 }
 
-// solution 2x2 is not valid
-func TestSolution2by2IsNotValid(t *testing.T) {
-	s := solution([]tile{nonTesalatingTile, nonTesalatingTile, nonTesalatingTile, nonTesalatingTile})
+// solution is not valid
+func TestSolutionIsNotValid(t *testing.T) {
+	s := grid([]tile{nonTesalatingTile, nonTesalatingTile, nonTesalatingTile, nonTesalatingTile})
 	if s.isValid() {
 		t.Error("solution must not be valid")
 	}
 }
 
 func TestSolutionIsComplete(t *testing.T) {
-	s := solution([]tile{tesalatingTile, tesalatingTile, tesalatingTile, tesalatingTile, tesalatingTile, tesalatingTile, tesalatingTile, tesalatingTile, tesalatingTile})
+	s := grid([]tile{tesalatingTile, tesalatingTile, tesalatingTile, tesalatingTile, tesalatingTile, tesalatingTile, tesalatingTile, tesalatingTile, tesalatingTile})
 	if !s.isComplete() {
 		t.Error("solution must be complete")
 	}
 }
 
 func TestSolutionIsNotCompleteNotValid(t *testing.T) {
-	s := solution([]tile{nonTesalatingTile, nonTesalatingTile, nonTesalatingTile, nonTesalatingTile, nonTesalatingTile, nonTesalatingTile, nonTesalatingTile, nonTesalatingTile, nonTesalatingTile})
+	s := grid([]tile{nonTesalatingTile, nonTesalatingTile, nonTesalatingTile, nonTesalatingTile, nonTesalatingTile, nonTesalatingTile, nonTesalatingTile, nonTesalatingTile, nonTesalatingTile})
 	if s.isComplete() {
 		t.Error("solution must not be complete")
 	}
 }
 
 func TestSolutionIsNotCompleteNot9(t *testing.T) {
-	s := solution([]tile{tesalatingTile, tesalatingTile, tesalatingTile, tesalatingTile, tesalatingTile, tesalatingTile, tesalatingTile, tesalatingTile})
+	s := grid([]tile{tesalatingTile, tesalatingTile, tesalatingTile, tesalatingTile, tesalatingTile, tesalatingTile, tesalatingTile, tesalatingTile})
 	if s.isComplete() {
 		t.Error("solution must not be complete")
 	}
@@ -153,7 +172,7 @@ func TestRotateTile(t *testing.T) {
 }
 
 func TestVariationsFromEmpty(t *testing.T) {
-	s := solution([]tile{})
+	s := grid([]tile{})
 	neighbours := s.variations(tesalatingTile)
 	if len(neighbours) != 4 {
 		t.Errorf("unexpected number of neighbours %d, wanted %d", len(neighbours), 4)
@@ -174,7 +193,7 @@ func TestVariationsFromEmpty(t *testing.T) {
 }
 
 func TestVariationsOnlyValid(t *testing.T) {
-	s := solution([]tile{tesalatingTile})
+	s := grid([]tile{tesalatingTile})
 	neighbours := s.variations(tesalatingTile)
 	if len(neighbours) != 1 {
 		t.Errorf("unexpected number of neighbours %d, wanted %d", len(neighbours), 1)
@@ -182,5 +201,85 @@ func TestVariationsOnlyValid(t *testing.T) {
 	}
 	if neighbours[0][1] != tesalatingTile {
 		t.Errorf("expected to get the tile in the neighbours")
+	}
+}
+
+func TestIsValidAgain(t *testing.T) {
+	s := grid([]tile{tesalatingTile, nonTesalatingTile})
+	if s.isValid() {
+		t.Errorf("solution should not be valid")
+	}
+}
+
+func TestPermutationsPlacesAllTilesInAllVariationsStartingWithEmpty(t *testing.T) {
+	s := solution{grid{}, []tile{tesalatingTile, nonTesalatingTile}}
+	solutions := s.permutations()
+	if len(solutions) != 8 {
+		t.Errorf("unexpected number of solutions %d, want %d", len(solutions), 8)
+	}
+	for _, sol := range solutions {
+		if !sol.isValid() {
+			t.Errorf("solution permutation was not valid")
+			return
+		}
+	}
+}
+
+func TestPermutationsPlacesAllTilesInAllValidVariations(t *testing.T) {
+	s := solution{grid{tesalatingTile}, []tile{tesalatingTile, nonTesalatingTile}}
+	solutions := s.permutations()
+	if len(solutions) != 2 {
+		t.Errorf("unexpected number of solutions %d, want %d", len(solutions), 2)
+	}
+	for _, sol := range solutions {
+		if !sol.isValid() {
+			t.Errorf("solution permutation was not valid")
+			return
+		}
+	}
+}
+
+// func TestAllPermutationsAreFound(t *testing.T) {
+// 	tarantula := spider(1)
+// 	cellar := spider(2)
+// 	johnson := spider(3)
+// 	wolf := spider(4)
+// 	s := solution{grid{}, []tile{
+// 		newTile(
+// 			side{wolf, head},
+// 			side{tarantula, tail},
+// 			side{tarantula, head},
+// 			side{johnson, head}),
+// 		newTile(
+// 			side{cellar, head},
+// 			side{tarantula, head},
+// 			side{wolf, head},
+// 			side{tarantula, head}),
+// 		newTile(
+// 			side{tarantula, tail},
+// 			side{cellar, tail},
+// 			side{tarantula, head},
+// 			side{johnson, head}),
+// 		newTile(
+// 			side{cellar, head},
+// 			side{johnson, tail},
+// 			side{johnson, head},
+// 			side{tarantula, head}),
+// 	}}
+// 	sols := search([]solution{s})
+// 	for _, v := range sols {
+// 		v.print()
+// 	}
+// }
+
+func TestImmutable(t *testing.T) {
+	g := grid{tesalatingTile}
+	gs := g.variations(newTile(
+		side{spider(1), head},
+		side{spider(2), tail},
+		side{spider(3), head},
+		side{spider(2), tail}))
+	for _, v := range gs {
+		v.print()
 	}
 }

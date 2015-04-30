@@ -1,9 +1,6 @@
 package main
 
-import (
-	"fmt"
-	"math"
-)
+import "fmt"
 
 // a spider must not be == 0
 type spider byte
@@ -18,15 +15,22 @@ type side struct {
 	part
 }
 
-func (s *side) toString() string {
-	return fmt.Sprintf("%v%s", s.spider, s.part)
-}
-
 type tile struct {
 	top    side
 	right  side
 	bottom side
 	left   side
+}
+
+type grid []tile
+type solution struct {
+	grid
+	remainingTiles []tile
+}
+
+type edge struct {
+	a side
+	b side
 }
 
 func (t tile) rotate(times int) tile {
@@ -37,15 +41,8 @@ func (t tile) rotate(times int) tile {
 	return t
 }
 
-type solution []tile
-
-type edge struct {
-	a side
-	b side
-}
-
-func (s solution) isValid() bool {
-	for _, e := range s.edges() {
+func (g grid) isValid() bool {
+	for _, e := range g.edges() {
 		if !match(e.a, e.b) {
 			return false
 		}
@@ -53,85 +50,62 @@ func (s solution) isValid() bool {
 	return true
 }
 
-func (s solution) isComplete() bool {
-	return len(s) == 9 && s.isValid()
+func (g grid) isComplete() bool {
+	return len(g) == 9 && g.isValid()
+}
+
+func (s solution) exhausted() bool {
+	return len(s.remainingTiles) == 0
 }
 
 // edges returns a slice of touching edges in the grid
-func (s solution) edges() (edges []edge) {
-	if (len(s)) == 1 {
+func (g grid) edges() (edges []edge) {
+	if (len(g)) == 1 {
 		return make([]edge, 0)
 	}
-	size := int(math.Sqrt(float64(len(s))))
-	for i := 0; i < len(s); i++ {
+	size := 3 // Locked to work for 3x3 grids
+	for i := 0; i < len(g); i++ {
 		// Adding vertical edges between tiles in a row
 		if i%size != 0 {
-			edges = append(edges, edge{s[i-1].right, s[i].left})
+			edges = append(edges, edge{g[i-1].right, g[i].left})
 		}
 		// Add horizontal top edges for second and third row
 		if i >= size {
-			edges = append(edges, edge{s[i-size].bottom, s[i].top})
+			edges = append(edges, edge{g[i-size].bottom, g[i].top})
 		}
 	}
 	return
 }
 
-func (s solution) place(t tile) solution {
-	return append(s, t)
-}
-
-// All possible permutations for this solution with the remaining tiles
-func (s solution) permutations(tiles []tile) []solution {
+// All possible permutations for thig grid with the remaining tiles
+func (s solution) permutations() []solution {
+	tiles := make([]tile, len(s.remainingTiles))
+	copy(tiles, s.remainingTiles)
 	var n []solution
-	for _, t := range tiles {
-		n = append(n, s.variations(t)...)
+	for i, t := range s.remainingTiles {
+		t1 := append(tiles[:i], tiles[i+1:]...)
+		vars := s.variations(t)
+		for j := 0; j < len(vars); j++ {
+			n = append(n, solution{append([]tile(nil), vars[j]...), append([]tile(nil), t1...)})
+		}
 	}
+	// fmt.Println(len(n), "permutations for")
+	// s.print()
+	// fmt.Println("============================")
 	return n
 }
 
-// places the tile in the next space
-func (s solution) variations(t tile) []solution {
-	var n []solution
+// places the tile in the next space in all possible rotations
+func (g grid) variations(t tile) []grid {
+	n := make([]grid, 0, 4)
 	for i := 0; i < 4; i++ {
-		s1 := s.place(t.rotate(i))
-		if s1.isValid() {
-			n = append(n, s1)
+		g1 := append(g, t.rotate(i))
+		// n = append(n, g1)
+		if g1.isValid() {
+			n = append(n, g1)
 		}
 	}
 	return n
-}
-
-func (s solution) print() {
-	s.printRow(0, 3)
-	s.printRow(3, 6)
-	s.printRow(6, 9)
-}
-
-func (s solution) printRow(from, to int) {
-	for i := from; i < to; i++ {
-		if i < len(s) {
-			fmt.Print("  ", s[i].top.toString(), "  ")
-		} else {
-			fmt.Print("  --  ")
-		}
-	}
-	fmt.Println("")
-	for i := from; i < to; i++ {
-		if i < len(s) {
-			fmt.Print(s[i].left.toString(), "  ", s[i].right.toString())
-		} else {
-			fmt.Print("--  --")
-		}
-	}
-	fmt.Println("")
-	for i := from; i < to; i++ {
-		if i < len(s) {
-			fmt.Print("  ", s[i].bottom.toString(), "  ")
-		} else {
-			fmt.Print("  --  ")
-		}
-	}
-	fmt.Println("")
 }
 
 // match true if the edge matches
@@ -142,19 +116,46 @@ func match(a, b side) bool {
 	return a.spider == b.spider && a.part != b.part
 }
 
-// Gives a solution to the puzzle by placing the given tiles in a square grid
-func solve(tiles []tile, solutions []solution) solution {
-	if len(solutions) == 0 {
-		// start from scratch
-		for _, tile := range tiles {
-			solutions = append(solutions, solution{tile})
+// search for solutions to the problem
+func search(solutions []solution) []solution {
+
+	// var bucket []solution
+
+	// for _, s := range solutions {
+	// 	for !s.exhausted() {
+	// 		perms := s.permutations()
+	// 		if len(perms) == 0 {
+	// 			fmt.Println("No solutions")
+	// 			break
+	// 		}
+	// 		// for _, v := range perms {
+	// 		// 	v.print()
+	// 		// 	fmt.Println(v.isValid())
+	// 		// 	fmt.Println("\n\n")
+	// 		// }
+	// 		s = perms[0]
+	// 	}
+	//
+	// }
+	//
+	// return []solution{}
+
+	var incomplete []solution
+	var exhausted []solution
+	for i := range solutions {
+		for _, s := range solutions[i].permutations() {
+			if s.exhausted() {
+				exhausted = append(exhausted, s)
+			} else {
+				incomplete = append(incomplete, s)
+			}
 		}
 	}
-	for _, s := range solutions {
-		solve(tiles[1:], s.variations(tiles[0]))
+	fmt.Println("status: placed", len(solutions[0].grid)+1, "inc", len(incomplete), "exh", len(exhausted))
+	if len(incomplete) == 0 {
+		return exhausted
 	}
-	// solve(tiles[1:], s.place(tiles[0]))
-	return solutions[0]
+	return search(incomplete)
 }
 
 func newTile(top, right, bottom, left side) tile {
@@ -237,14 +238,51 @@ func main() {
 		side{tarantula, tail},
 		side{wolf, tail})
 
-	// picSol := solution{tiles[0], tiles[1], tiles[2],
-	// 	tiles[3], tiles[4], tiles[5],
-	// 	tiles[6], tiles[7], tiles[8]}
-	// picSol.print()
-	// fmt.Printf("Solved: %v\n", picSol.isComplete())
-
 	fmt.Println("Solving spiders")
-	sol := solve(tiles, make([]solution, 0))
-	sol.print()
+	sol := search([]solution{solution{grid{}, tiles}})
+	if len(sol) == 0 {
+		fmt.Println("No solutions found")
+		return
+	}
+	for _, s := range sol {
+		s.print()
+		fmt.Println("=====================================")
+	}
+}
 
+func (g grid) print() {
+	g.printRow(0, 3)
+	g.printRow(3, 6)
+	g.printRow(6, 9)
+}
+
+func (g grid) printRow(from, to int) {
+	for i := from; i < to; i++ {
+		if i < len(g) {
+			fmt.Print("  ", g[i].top.toString(), "  ")
+		} else {
+			fmt.Print("  --  ")
+		}
+	}
+	fmt.Println("")
+	for i := from; i < to; i++ {
+		if i < len(g) {
+			fmt.Print(g[i].left.toString(), "  ", g[i].right.toString())
+		} else {
+			fmt.Print("--  --")
+		}
+	}
+	fmt.Println("")
+	for i := from; i < to; i++ {
+		if i < len(g) {
+			fmt.Print("  ", g[i].bottom.toString(), "  ")
+		} else {
+			fmt.Print("  --  ")
+		}
+	}
+	fmt.Println("")
+}
+
+func (s *side) toString() string {
+	return fmt.Sprintf("%v%s", s.spider, s.part)
 }
